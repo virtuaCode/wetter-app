@@ -1,10 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import axios from 'axios';
-import { IncomingMessage } from 'http';
-import { map } from 'rxjs';
 import * as fs from 'fs'
 const qs = require('node:querystring');
-import { GoogleAICacheManager, GoogleAIFileManager } from "@google/generative-ai/server";
+import { GoogleAIFileManager } from "@google/generative-ai/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 @Injectable()

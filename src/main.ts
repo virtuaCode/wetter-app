@@ -2,8 +2,9 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
-import { HttpFilter } from './http/http.filter';
+import { HttpFilter as HttpAuthFilter } from './http/http.filter';
 import * as cookieParser from 'cookie-parser';
+import { ConfigService } from '@nestjs/config';
 
 async function bootstrap() {
 
@@ -15,7 +16,7 @@ async function bootstrap() {
   app.setBaseViewsDir(join(__dirname, '..', 'views'));
   app.setViewEngine('pug');
   app.use(cookieParser());
-  app.useGlobalFilters(new HttpFilter());
+  app.useGlobalFilters(new HttpAuthFilter());  
 
   await app.listen(3000);
 }

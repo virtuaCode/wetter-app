@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  nestjs-api:
+    container_name: nestjs-api
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./public:/app/public
+      - ./views:/app/views
+    ports:
+      - ${PORT}:3000
+    env_file:
+      - ./.env

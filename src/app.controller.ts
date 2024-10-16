@@ -54,17 +54,22 @@ export class AppController {
     const weather = await this.appService.getWetter(date, currentCity)
     const groups = this.appService.groupWetter(weather, 4).map((e) => {
       return {
-      time: e.time,
-      temperture: e.temperature + " °C",
-      condition: e.condition,
-      wind: e.wind + " km/h",
-    }
-  })
+        time: e.time,
+        temperture: e.temperature + " °C",
+        condition: e.icon,
+        wind: e.wind + " km/h",
+      }
+    })
 
-    const response = await this.appService.getGeneratedText(process.env.WEATHER_PROMPT, date, currentCity, groups)
+    const data = {
+      date: date.toISOString().split('T')[0],
+      location: currentCity,
+      weather: groups,
+    }
+
+    const response = await this.appService.getGeneratedText(process.env.WEATHER_PROMPT, date, currentCity, data)
 
     res.redirect("/weather/" + id + "/" + day)
-    //this.appService.getGeneratedText("", )
   }
 
 
@@ -102,8 +107,6 @@ export class AppController {
       }, {});
 
     const grouped = group(weather.map(e => e.icon))
-
-    console.dir(grouped)
 
     const response = {
       icons: {
