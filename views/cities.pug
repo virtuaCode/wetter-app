@@ -1,0 +1,58 @@
+extends layout.pug
+
+block content
+    .container-fluid.mt-5
+        h4 
+            | Wetter-Vorhersage für 
+            =day.toLocaleDateString("de-DE")
+        hr
+
+        .row 
+            .col
+                table.table.table-borderless.table-striped
+                    thead 
+                        tr
+                            th(scope="col") Stadt
+                            th Max Temp. in °C
+                            th Min Temp. in °C
+                            th Wind in km/h
+                            each group in weather[Object.keys(weather)[0]].groups
+                                th= group.time
+                    tbody 
+                        each city in Object.keys(weather)
+                            tr
+                                td=weather[city].name
+                                td.bg-danger.text-center.text-white=weather[city].max 
+                                td.bg-primary.text-center.text-white=weather[city].min
+                                td.bg-secondary-subtle.text-center=weather[city].wind
+                                each group in weather[city].groups
+                                    td
+                                        i.h3(class=group.iconImage)
+                                        | 
+                                        =group.icon
+
+
+        .row(hidden)
+            each city in Object.keys(weather)
+                .col.mb-3
+                    .card.h-100
+                        .card-header.text-center= weather[city].name
+                        .row.g-0 
+                            .col.mb-0.h4.p-4.bg-danger.bg-gradient.text-white.text-center= weather[city].max + " °C"
+                        .row.g-0     
+                            .col.mb-0.h4.p-4.bg-primary.bg-gradient.text-white.text-center= weather[city].min + " °C"
+                        .row.g-0     
+                            .col.mb-0.h4.p-4.bg-secondary-subtle.bg-gradient.text-center= weather[city].wind + " km/h"
+                        
+                        
+                        each group in weather[city].groups
+                            .card-body.text-center.border-top
+                                div
+                                    i.h1(class=group.iconImage)
+                                    br
+                                    strong= group.time
+                                    br
+                                    =group.condition
+                                    | 
+                                    span.text-secondary="(" + group.icon +")"
+                                

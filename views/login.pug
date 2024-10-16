@@ -1,0 +1,14 @@
+extends layout.pug
+
+block content
+    .container 
+        .row.mt-5.justify-content-center
+            .col-3
+                form(action="/login", method="POST")
+                    .mb-3
+                        label.form-label(for="usernameInput") Benutzer
+                        input.form-control(type="text" id="usernameInput" name="username")
+                    .mb-3
+                        label.form-label(for="passwordInput") Passwort
+                        input.form-control(type="password" id="passwordInput" name="password")
+                    input.btn.btn-primary(type="submit" value="Login")

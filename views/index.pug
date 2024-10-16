@@ -1,0 +1,70 @@
+extends layout.pug
+
+block content
+    #chart(data-url="/stats/" + currentCity.id + "/" + currentDay)
+    .container 
+        .row.mt-5 
+            .col 
+                nav(aria-label='...')
+                    ul.pagination.justify-content-center
+                        each city in cities
+                            li.page-item(aria-current='page' class=(city === currentCity) ? 'active' : '')
+                                a.page-link(href='/weather/' + city.id + "/" + currentDay)=city.name
+
+
+
+
+        .row.my-5
+            .col
+                ul.nav.nav-tabs
+                    each day in days
+                        li.nav-item
+                            a.nav-link(href='/weather/' + currentCity.id + '/' + day, class=(day === currentDay) ? 'active' : '')= translateDayGerman(day)
+
+        .row.mb-3 
+            .col
+                .card.h-100
+                    .card-header 
+                        .h4.mb-0= currentCity.name + " am " + day.toLocaleDateString("de-DE")
+
+                    .card-body.p-0
+                        .row.g-0.h-100
+                            .col.d-flex.align-items-center.justify-content-center.mb-0.h4.p-4.bg-danger.bg-gradient.text-white.text-center=max + " °C"
+                            .col.d-flex.align-items-center.justify-content-center.mb-0.h4.p-4.bg-primary.bg-gradient.text-white.text-center=min + " °C"
+                            .col.d-flex.align-items-center.justify-content-center.mb-0.h4.p-4.bg-secondary-subtle.bg-gradient.text-center=wind + " km/h"
+                    .card-footer
+            .col
+                .card.h-100
+                    .card-header 
+                        .h4.mb-0 Wetter Text
+
+                    .card-body= generatedText
+
+                    form.card-footer(action="/generate/" + currentCity.id + '/' + currentDay, method="post")
+                        input(type="submit" class="btn btn-outline-primary float-end" value="Generiere Text") 
+
+        .row
+            each hour in grouped
+                .col.mb-3
+                    .card.h-100
+                        .card-header.text-center= hour.time
+                        .card-body.text-center
+                            i.h3(class=hour.iconImage)
+                            br
+                            h3.mt-2= hour.temperature + " °C"
+                            p.mb-0= hour.condition
+                        .card-footer 
+                            p.mb-0.text-center= hour.wind + " km/h"
+
+        hr.my-3
+        .row 
+            .col
+                h4 Wetterlage 
+                div#chart-icon
+            .col 
+                h4 Regenmenge
+                div#chart-preci
+
+block scripts
+    script(src='/charts.js')
+
