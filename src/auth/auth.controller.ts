@@ -17,6 +17,13 @@ export class AuthController {
     }
 
     @HttpCode(HttpStatus.OK)
+    @Get('logout')
+    async logout(@Res() res: Response) {
+      res.clearCookie("auth-cookie");
+      res.redirect("/")
+    }
+
+    @HttpCode(HttpStatus.OK)
     @Get('login')
     getSignIn(@Res() res: Response) {
         res.render("login")

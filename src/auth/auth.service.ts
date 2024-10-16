@@ -8,7 +8,7 @@ export class AuthService {
     constructor(private jwtService: JwtService) { }
 
     async signIn(username: string, pass: string): Promise<any> {
-        const user = { username: process.env.USERNAME, password: process.env.PASSWORD }
+        const user = { username: process.env.USERNAME, password: '$2b$12$' + process.env.PASSWORD }
 
         if (user.username !== username) {
             throw new UnauthorizedException();
