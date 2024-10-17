@@ -185,14 +185,32 @@ export class AppService {
     return cities
   }
 
+  cleanCache() {
+    for (const key of this.cache.keys()) {
+      const date = new Date(key.slice(-10));
+
+      const oldDate = new Date();
+      oldDate.setDate(oldDate.getDate() - 1);
+
+      if (date.getTime() < oldDate.getTime()) {
+        console.log("Deleted from cache (" + key + ")")
+        this.cache.delete(key);
+      }
+    }
+  }
+
   async getWeather(date, city): Promise<any> {
 
     const query = {
       date: this.getGermanyMidnightDate(date).toISOString(),
       lat: city.lat,
-      lon: city.lon
+      lon: city.lon,
+      currentDate: new Date().toISOString().split('T')[0]
     }
     try {
+
+      this.cleanCache()
+
       const querystring = qs.stringify(query);
       if (this.cache.has(querystring)) {
         console.log("Retrieved from cache (" + querystring + ")");
