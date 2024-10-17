@@ -201,9 +201,12 @@ export class AppService {
 
 
       const result = await axios.get(this.base, { params: query });
-      this.cache.set(querystring, result.data.weather)
+      
+      const data = result.data.weather.slice(0,24)
+      
+      this.cache.set(querystring, data)
 
-      return result.data.weather;
+      return data
     } catch (error) {
       console.error(error.message)
       return {}

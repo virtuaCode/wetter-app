@@ -106,14 +106,13 @@ export class AppController {
     date.setDate(date.getDate() + currentDayIndex);
     const weather = await this.appService.getWeather(date, currentCity)
 
-
     const group = arr =>
       arr.reduce((a, v) => {
         a[v] = (a[v] ?? 0) + 1;
         return a;
       }, {});
 
-    const grouped = group(weather.map(e => e.icon))
+    const grouped = group(weather.map(e => this.appService.translateWeatherToGerman(e.icon)))
 
     const response = {
       icons: {
