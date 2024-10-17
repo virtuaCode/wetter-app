@@ -1,0 +1,19 @@
+extends layout.pug
+
+
+block content 
+    .container
+        .row.mt-5
+            each day in weather.slice(0, 7)
+                .col-xs-6.col-sm-3.col-lg.mb-3
+                    .card.h-100
+                        .card-header.text-center
+                            div= day.day
+                            div= day.date.toLocaleDateString('de-DE')
+                        .card-body.text-center.pb-0
+                            img.mb-1(src=day.icon)
+                            br
+                            .text-center.mb-3.lead= day.alt
+
+                            .margin-minus.d-flex.align-items-center.justify-content-center.mb-0.h4.p-4.bg-danger.bg-gradient.text-white.text-center= day.max + "C"
+                            .margin-minus.d-flex.align-items-center.justify-content-center.mb-0.h4.p-4.bg-primary.bg-gradient.text-white.text-center.rounded-bottom= day.min + "C"

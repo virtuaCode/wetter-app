@@ -2,14 +2,14 @@ extends layout.pug
 
 block content
     #chart(data-url="/stats/" + currentCity.id + "/" + currentDay)
+
     .container 
-        .row.mt-5 
-            .col 
-                nav.overflow-x-auto(aria-label='...')
-                    ul.pagination.justify-content-center
-                        each city in cities
-                            li.page-item(aria-current='page' class=(city === currentCity) ? 'active' : '')
-                                a.page-link(href='/weather/' + city.id + "/" + currentDay)=city.name
+        .overflow-x-auto.mt-5
+            nav.d-flex(aria-label='...')
+                ul.pagination.mx-auto
+                    each city in cities
+                        li.page-item(aria-current='page' class=(city === currentCity) ? 'active' : '')
+                            a.page-link(href='/weather/' + city.id + "/" + currentDay)=city.name
 
 
 
@@ -48,11 +48,11 @@ block content
                 .col-xs-6.col-sm-3.col-lg.mb-3
                     .card.h-100
                         .card-header.text-center= hour.time
-                        .card-body.text-center
+                        .card-body.text-center.d-flex.flex-column
                             i.h3(class=hour.iconImage)
                             br
                             h3.mt-2= hour.temperature + " °C"
-                            p.mb-0= hour.condition
+                            p.mb-0.flex-fill.d-flex.align-items-center.justify-content-center= hour.icon
                         .card-footer 
                             p.mb-0.text-center= hour.wind + " km/h"
 

@@ -5,11 +5,14 @@ const qs = require('node:querystring');
 import { GoogleAIFileManager } from "@google/generative-ai/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
+import * as jsdom from "jsdom"
+
 @Injectable()
 export class AppService {
   days = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
   daysGerman = ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"]
 
+  wetterOberfranken = "https://www.mein-wetter.com/wetter/franken-oberfranken.htm"
   gemini = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
   cities = [
@@ -168,8 +171,8 @@ export class AppService {
 
 
     for (const city of this.cities) {
-      const weather = await this.getWetter(date, city)
-      const groups = this.groupWetter(weather, 4)
+      const weather = await this.getWeather(date, city)
+      const groups = this.groupWeather(weather, 4)
       cities[city.id] = {
         name: city.name,
         min: Math.round(Math.min(...weather.map(e => e.temperature))),
@@ -182,7 +185,7 @@ export class AppService {
     return cities
   }
 
-  async getWetter(date, city): Promise<any> {
+  async getWeather(date, city): Promise<any> {
 
     const query = {
       date: this.getGermanyMidnightDate(date).toISOString(),
@@ -237,7 +240,7 @@ export class AppService {
     return mostFrequent;
   }
 
-  groupWetter(weatherDay, hours) {
+  groupWeather(weatherDay, hours) {
     const grouped = [];
 
     for (let i = 0; i < Math.round(24 / hours); i++) {
@@ -272,6 +275,35 @@ export class AppService {
 
 
     return grouped
+  }
+
+  async getWeatherOberfranken() {
+    const url = this.wetterOberfranken;
+
+    const result = await axios.get(url);
+
+    const dom = new jsdom.JSDOM(result.data)
+
+    const days = dom.window.document.querySelectorAll("#blockfooter .seven-day-fc2")
+
+    const dayElements = [...Array.from(days.values())];
+
+    const data = dayElements.map(e => {
+      const [YYYY, MM, DD] = e.querySelector("time").getAttribute("datetime").split('-')
+      const date = new Date(+YYYY, +MM - 1, +DD);
+
+      return {
+        day: this.daysGerman[date.getDay()],
+        date: date,
+        icon: "https://www.mein-wetter.com" + e.querySelector("img").src,
+        alt: e.querySelector("img").alt,
+        min: e.querySelector(".temp-low2").textContent,
+        max: e.querySelector(".temp-high2").textContent,
+      }
+    })
+
+    return data
+
   }
 
 

@@ -26,6 +26,13 @@ export class AppController {
     });
   }
 
+  @Get('/oberfranken')
+  async getOberfranken(@Res() res: Response) {
+    res.render("oberfranken", {
+      weather: await this.appService.getWeatherOberfranken(),
+    });
+  }
+
 
   @Post('/generate/:id/:day')
   async generate(@Param('id') id: string, @Param('day') day: string, @Res() res: Response) {
@@ -51,8 +58,8 @@ export class AppController {
     const date = new Date();
     date.setDate(date.getDate() + currentDayIndex);
 
-    const weather = await this.appService.getWetter(date, currentCity)
-    const groups = this.appService.groupWetter(weather, 4).map((e) => {
+    const weather = await this.appService.getWeather(date, currentCity)
+    const groups = this.appService.groupWeather(weather, 4).map((e) => {
       return {
         time: e.time,
         temperture: e.temperature + " °C",
@@ -97,7 +104,7 @@ export class AppController {
 
     const date = new Date();
     date.setDate(date.getDate() + currentDayIndex);
-    const weather = await this.appService.getWetter(date, currentCity)
+    const weather = await this.appService.getWeather(date, currentCity)
 
 
     const group = arr =>
@@ -146,8 +153,8 @@ export class AppController {
 
     const date = new Date();
     date.setDate(date.getDate() + currentDayIndex);
-    const weather = await this.appService.getWetter(date, currentCity)
-    const grouped = await this.appService.groupWetter(weather, 3)
+    const weather = await this.appService.getWeather(date, currentCity)
+    const grouped = await this.appService.groupWeather(weather, 3)
     const max = Math.max(...weather.map(e => Math.round(e.temperature)))
     const min = Math.min(...weather.map(e => Math.round(e.temperature)))
     const wind = Math.max(...weather.map(e => e.wind_speed))
