@@ -58,7 +58,7 @@ export class AppController {
     const date = new Date();
     date.setDate(date.getDate() + currentDayIndex);
 
-    const weather = await this.appService.getWeather(date, currentCity)
+    const [weather, dateCache] = await this.appService.getWeather(date, currentCity)
     const groups = this.appService.groupWeather(weather, 4).map((e) => {
       return {
         time: e.time,
@@ -104,33 +104,37 @@ export class AppController {
 
     const date = new Date();
     date.setDate(date.getDate() + currentDayIndex);
-    const weather = await this.appService.getWeather(date, currentCity)
-
-    const group = arr =>
-      arr.reduce((a, v) => {
-        a[v] = (a[v] ?? 0) + 1;
-        return a;
-      }, {});
-
-    const grouped = group(weather.map(e => this.appService.translateWeatherToGerman(e.icon)))
-
-    const response = {
-      icons: {
-        data: Object.values(grouped),
-        labels: Object.keys(grouped)
-      },
-      preci: {
-        data: weather.map(e => e.precipitation),
-        labels: weather.map(e => e.timestamp)
-      }
-    }
+    
+    const [weather, dateCache] = await this.appService.getWeather(date, currentCity)
+    const response = this.appService.getWeatherStats(weather);
 
     res.send(response)
-
-
   }
 
+  @Post('/refresh/:id/:day')
+  async getRefresh(@Param('id') id: string, @Param('day') day: string, @Res() res: Response): Promise<any> {
 
+    const currentCity = this.appService.getCities().find(e => e.id === id)
+
+    if (currentCity === undefined) {
+      console.log("Current City not found")
+      return res.redirect("/")
+    }
+
+    const currentDayIndex = this.appService.getDays(new Date().getDay()).findIndex(d => d === day)
+    const currentDay = this.appService.getDays(new Date().getDay())[currentDayIndex]
+
+    if (currentDayIndex < 0) {
+      console.log("Current Day not found")
+      return res.redirect("/")
+    }
+    const date = new Date();
+    date.setDate(date.getDate() + currentDayIndex);
+
+    this.appService.clearCacheEntry(date, currentCity)
+
+    res.redirect("/weather/" + currentCity.id + "/" + currentDay)
+  }
 
   @Get('/weather/:id/:day')
   async getWeather(@Param('id') id: string, @Param('day') day: string, @Res() res: Response): Promise<any> {
@@ -152,7 +156,7 @@ export class AppController {
 
     const date = new Date();
     date.setDate(date.getDate() + currentDayIndex);
-    const weather = await this.appService.getWeather(date, currentCity)
+    const [weather, dateCache] = await this.appService.getWeather(date, currentCity)
     const grouped = await this.appService.groupWeather(weather, 3)
     const max = Math.max(...weather.map(e => Math.round(e.temperature)))
     const min = Math.min(...weather.map(e => Math.round(e.temperature)))
@@ -186,6 +190,7 @@ export class AppController {
     res.render("index", {
       day: date,
       days: daysOrdered,
+      dateCache,
       translateDayGerman,
       currentDay,
       currentCity,

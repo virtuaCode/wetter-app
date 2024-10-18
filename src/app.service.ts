@@ -72,12 +72,26 @@ export class AppService {
     },
   ];
   cache: Map<string, any> = new Map();
+  cacheTime: Map<string, any> = new Map();
   geminiCache: Map<string, any> = new Map()
   base = process.env.WEATHER_BASE_URL;
 
   getIndex() {
     const date = new Date();
     return "/weather/" + this.getCities()[0].id + "/" + this.days[date.getDay()]
+  }
+
+  clearCacheEntry(date, city) {
+    const query = {
+      date: this.getGermanyMidnightDate(date).toISOString(),
+      lat: city.lat,
+      lon: city.lon,
+    }
+
+    const querystring = qs.stringify(query);
+
+    this.cacheTime.set(querystring, 0)
+    this.cleanCache()
   }
 
   getGenerateTextCached(date: Date, city: any) {
@@ -171,7 +185,7 @@ export class AppService {
 
 
     for (const city of this.cities) {
-      const weather = await this.getWeather(date, city)
+      const [weather, dateCache] = await this.getWeather(date, city)
       const groups = this.groupWeather(weather, 4)
       cities[city.id] = {
         name: city.name,
@@ -187,14 +201,13 @@ export class AppService {
 
   cleanCache() {
     for (const key of this.cache.keys()) {
-      const date = new Date(key.slice(-10));
+      const oldDate = new Date().getTime() - +process.env.CACHE_TIME_MS;
+      const time = this.cacheTime.get(key)
 
-      const oldDate = new Date();
-      oldDate.setDate(oldDate.getDate() - 1);
-
-      if (date.getTime() < oldDate.getTime()) {
+      if (time < oldDate) {
         console.log("Deleted from cache (" + key + ")")
         this.cache.delete(key);
+        this.cacheTime.delete(key);
       }
     }
   }
@@ -205,7 +218,6 @@ export class AppService {
       date: this.getGermanyMidnightDate(date).toISOString(),
       lat: city.lat,
       lon: city.lon,
-      currentDate: new Date().toISOString().split('T')[0]
     }
     try {
 
@@ -214,7 +226,7 @@ export class AppService {
       const querystring = qs.stringify(query);
       if (this.cache.has(querystring)) {
         console.log("Retrieved from cache (" + querystring + ")");
-        return this.cache.get(querystring);
+        return [this.cache.get(querystring), new Date(this.cacheTime.get(querystring))];
       }
 
 
@@ -223,8 +235,9 @@ export class AppService {
       const data = result.data.weather.slice(0,24)
       
       this.cache.set(querystring, data)
+      this.cacheTime.set(querystring, new Date().getTime())
 
-      return data
+      return [data, new Date(this.cacheTime.get(querystring))]
     } catch (error) {
       console.error(error.message)
       return {}
@@ -296,6 +309,31 @@ export class AppService {
 
 
     return grouped
+  }
+
+  getWeatherStats(weather: any) {
+    const group = arr => arr.reduce((a, v) => {
+      a[v] = (a[v] ?? 0) + 1;
+      return a;
+    }, {});
+
+    const grouped = group(weather.map(e => this.translateWeatherToGerman(e.icon)));
+
+    const response = {
+      icons: {
+        data: Object.values(grouped),
+        labels: Object.keys(grouped)
+      },
+      preci: {
+        data: weather.map(e => e.precipitation),
+        labels: weather.map(e => e.timestamp)
+      },
+      temp: {
+        data: weather.map(e => e.temperature),
+        labels: weather.map(e => e.timestamp)
+      }
+    };
+    return response;
   }
 
   async getWeatherOberfranken() {

@@ -25,14 +25,21 @@ block content
             .col-sm-12.col-md-6.mb-3.mb-md-0
                 .card.h-100
                     .card-header 
-                        .h4.mb-0= currentCity.name + " am " + day.toLocaleDateString("de-DE")
+                        .h4.mb-0
+                            = currentCity.name + " am " + day.toLocaleDateString("de-DE")
+
 
                     .card-body.p-0
                         .row.g-0.h-100
                             .col.d-flex.align-items-center.justify-content-center.mb-0.h4.p-4.bg-danger.bg-gradient.text-white.text-center=max + " °C"
                             .col.d-flex.align-items-center.justify-content-center.mb-0.h4.p-4.bg-primary.bg-gradient.text-white.text-center=min + " °C"
                             .col.d-flex.align-items-center.justify-content-center.mb-0.h4.p-4.bg-secondary-subtle.bg-gradient.text-center=wind + " km/h"
-                    .card-footer
+                    .card-footer.d-flex.align-items-center
+                        small.fw-light.me-auto Letzte Aktualisierung: 
+                            = dateCache.toLocaleString("de-DE")
+                        form(action="/refresh/" + currentCity.id + '/' + currentDay method="POST") 
+                            input.btn.btn-sm.btn-outline-secondary(type="submit" value="Refresh")
+
             .col-sm-12.col-md-6
                 .card.h-100
                     .card-header 
@@ -62,7 +69,7 @@ block content
                 h4 Wetterlage 
                 div#chart-icon
             .col-sm-12.col-md-6
-                h4 Regenmenge
+                h4 Temperatur und Regenmenge
                 div#chart-preci
 
 block scripts
