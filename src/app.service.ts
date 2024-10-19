@@ -6,6 +6,7 @@ import { GoogleAIFileManager } from "@google/generative-ai/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 import * as jsdom from "jsdom"
+import { SettingsService } from './settings/settings.service';
 
 @Injectable()
 export class AppService {
@@ -14,71 +15,16 @@ export class AppService {
 
   wetterOberfranken = "https://www.mein-wetter.com/wetter/franken-oberfranken.htm"
   gemini = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
-  cities = [
-    {
-      id: "bamberg",
-      name: "Bamberg",
-      lat: 49.901193,
-      lon: 10.889831
-    },
-    {
-      id: "forchheim",
-      name: "Forchheim",
-      lat: 49.72227302829307,
-      lon: 11.059637994808242
-    },
-    {
-      id: "kulmbach",
-      name: "Kulmbach",
-      lat: 50.10753525431489,
-      lon: 11.443265835122602
-    },
-    {
-      id: "bayreuth",
-      name: "Bayreuth",
-      lat: 49.94460274458677,
-      lon: 11.571914470044986
-    },
-    {
-      id: "coburg",
-      name: "Coburg",
-      lat: 50.26454169224746,
-      lon: 10.958702990908975,
-    },
-    {
-      id: "kronach",
-      name: "Kronach",
-      lat: 50.23690043110816,
-      lon: 11.327279334623018,
-    },
-    {
-      id: "lichtenfels",
-      name: "Lichtenfels",
-      lat: 50.14093928784083,
-      lon: 11.055421407492815
-    },
-    {
-      id: "hof",
-      name: "Hof",
-      lat: 50.31243386221696,
-      lon: 11.9124159778565
-    },
-    {
-      id: "wunsiedel",
-      name: "Wunsiedel",
-      lat: 50.040491350523375,
-      lon: 12.004994377909737,
-    },
-  ];
   cache: Map<string, any> = new Map();
   cacheTime: Map<string, any> = new Map();
   geminiCache: Map<string, any> = new Map()
   base = process.env.WEATHER_BASE_URL;
 
+  constructor(private readonly settingsService: SettingsService) {}
+
   getIndex() {
     const date = new Date();
-    return "/weather/" + this.getCities()[0].id + "/" + this.days[date.getDay()]
+    return "/weather/" + this.settingsService.getCities()[0].id + "/" + this.days[date.getDay()]
   }
 
   clearCacheEntry(date, city) {
@@ -157,10 +103,6 @@ export class AppService {
     return germanyDate;
   }
 
-  getCities() {
-    return this.cities
-  }
-
   getDays(k) {
 
     const days = [...this.days];
@@ -184,7 +126,7 @@ export class AppService {
     const cities = {}
 
 
-    for (const city of this.cities) {
+    for (const city of this.settingsService.getCities()) {
       const [weather, dateCache] = await this.getWeather(date, city)
       const groups = this.groupWeather(weather, 4)
       cities[city.id] = {
@@ -201,7 +143,7 @@ export class AppService {
 
   cleanCache() {
     for (const key of this.cache.keys()) {
-      const oldDate = new Date().getTime() - +process.env.CACHE_TIME_MS;
+      const oldDate = new Date().getTime() - +this.settingsService.getCacheTime() * 60 * 1000;
       const time = this.cacheTime.get(key)
 
       if (time < oldDate) {

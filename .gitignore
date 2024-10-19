@@ -1,5 +1,6 @@
 # Others
 weather.json
+/settings/settings.json
 # compiled output
 /dist
 /node_modules

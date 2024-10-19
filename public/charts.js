@@ -68,7 +68,6 @@ fetch(url).then(res => {
                 categories: e.preci.labels.map(el => new Date(el).getHours())
             },
             yaxis: [
-
                 {
                     opposite: true,
                     axisTicks: {
@@ -90,7 +89,6 @@ fetch(url).then(res => {
                         }
                     }
                 },
-
                 {
 
                     axisTicks: {

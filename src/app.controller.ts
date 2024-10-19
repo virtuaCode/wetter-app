@@ -1,12 +1,16 @@
-import { Controller, Get, Param, Post, Render, Res, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Param, Post, Render, Res, UseGuards } from '@nestjs/common';
 import { AppService } from './app.service';
 import { Response } from 'express';
 import { AuthGuard } from './auth/auth.guard';
+import { SettingsService } from './settings/settings.service';
 
 @UseGuards(AuthGuard)
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) { }
+  constructor(
+    private readonly appService: AppService,
+    private readonly settingsService: SettingsService
+  ) { }
 
 
   @Get()
@@ -33,10 +37,44 @@ export class AppController {
     });
   }
 
+  @Get('/settings')
+  async getSettings(@Res() res: Response) {
+    const cities = this.settingsService.getCities();
+    const prompt = this.settingsService.getPrompt();
+    const cachetime = this.settingsService.getCacheTime();
+    res.render("settings", {cities, prompt, cachetime});
+  }
+
+  @Post('/settings/prompt')
+  async postSettingsPrompt(@Body() body, @Res() res: Response) {
+      await this.settingsService.setPrompt(body.prompt?.trim())
+      res.redirect("/settings")
+  }
+
+  @Post('/settings/cachetime')
+  async postSettingsCache(@Body() body, @Res() res: Response) {
+      await this.settingsService.setCacheTime(Number.parseInt(body.cachetime))
+      res.redirect("/settings")
+  }
+
+  @Post('/settings/cities')
+  async postSettingsCities(@Body() body, @Res() res: Response) {
+
+    try {
+      const cities = JSON.parse(body.cities)
+
+      await this.settingsService.setCities(cities)
+
+      res.redirect("/settings")
+    } catch (error) {
+      throw new BadRequestException()
+    }
+  }
+
 
   @Post('/generate/:id/:day')
   async generate(@Param('id') id: string, @Param('day') day: string, @Res() res: Response) {
-    const currentCity = this.appService.getCities().find(e => e.id === id)
+    const currentCity = this.settingsService.getCities().find(e => e.id === id)
 
     if (currentCity === undefined) {
       console.log("Current City not found")
@@ -74,7 +112,7 @@ export class AppController {
       weather: groups,
     }
 
-    const response = await this.appService.getGeneratedText(process.env.WEATHER_PROMPT, date, currentCity, data)
+    const response = await this.appService.getGeneratedText(this.settingsService.getPrompt(), date, currentCity, data)
 
     res.redirect("/weather/" + id + "/" + day)
   }
@@ -83,7 +121,7 @@ export class AppController {
   @Get('/stats/:id/:day')
   async getStats(@Param('id') id: string, @Param('day') day: string, @Res() res: Response): Promise<any> {
 
-    const currentCity = this.appService.getCities().find(e => e.id === id)
+    const currentCity = this.settingsService.getCities().find(e => e.id === id)
 
     if (currentCity === undefined) {
       console.log("Current City not found")
@@ -114,7 +152,7 @@ export class AppController {
   @Post('/refresh/:id/:day')
   async getRefresh(@Param('id') id: string, @Param('day') day: string, @Res() res: Response): Promise<any> {
 
-    const currentCity = this.appService.getCities().find(e => e.id === id)
+    const currentCity = this.settingsService.getCities().find(e => e.id === id)
 
     if (currentCity === undefined) {
       console.log("Current City not found")
@@ -139,7 +177,7 @@ export class AppController {
   @Get('/weather/:id/:day')
   async getWeather(@Param('id') id: string, @Param('day') day: string, @Res() res: Response): Promise<any> {
 
-    const currentCity = this.appService.getCities().find(e => e.id === id)
+    const currentCity = this.settingsService.getCities().find(e => e.id === id)
 
     if (currentCity === undefined) {
       console.log("Current City not found")
@@ -163,7 +201,7 @@ export class AppController {
     const wind = Math.max(...weather.map(e => e.wind_speed))
     const daysOrdered = this.appService.getDays(new Date().getDay());
     const generatedText = this.appService.getGenerateTextCached(date, currentCity);
-    const cities = this.appService.getCities();
+    const cities = this.settingsService.getCities();
 
     const translateDayGerman = (day) => {
       switch (day.toLowerCase()) {

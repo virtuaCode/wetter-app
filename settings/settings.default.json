@@ -1,0 +1,60 @@
+{
+    "prompt": "Schreibe eine kompakte Wettervorhersage unter Verwendung der Weather Datei beginnend mit dem Morgen.",
+    "cacheTimeInMinutes": 60,
+    "cities": [
+        {
+            "id": "bamberg",
+            "name": "Bamberg",
+            "lat": 49.901193,
+            "lon": 10.889831
+        },
+        {
+            "id": "forchheim",
+            "name": "Forchheim",
+            "lat": 49.72227302829307,
+            "lon": 11.059637994808242
+        },
+        {
+            "id": "kulmbach",
+            "name": "Kulmbach",
+            "lat": 50.10753525431489,
+            "lon": 11.443265835122602
+        },
+        {
+            "id": "bayreuth",
+            "name": "Bayreuth",
+            "lat": 49.94460274458677,
+            "lon": 11.571914470044986
+        },
+        {
+            "id": "coburg",
+            "name": "Coburg",
+            "lat": 50.26454169224746,
+            "lon": 10.958702990908975
+        },
+        {
+            "id": "kronach",
+            "name": "Kronach",
+            "lat": 50.23690043110816,
+            "lon": 11.327279334623018
+        },
+        {
+            "id": "lichtenfels",
+            "name": "Lichtenfels",
+            "lat": 50.14093928784083,
+            "lon": 11.055421407492815
+        },
+        {
+            "id": "hof",
+            "name": "Hof",
+            "lat": 50.31243386221696,
+            "lon": 11.9124159778565
+        },
+        {
+            "id": "wunsiedel",
+            "name": "Wunsiedel",
+            "lat": 50.040491350523375,
+            "lon": 12.004994377909737
+        }
+    ]
+}

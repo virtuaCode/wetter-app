@@ -10,6 +10,7 @@ services:
     volumes:
       - ./public:/app/public
       - ./views:/app/views
+      - ./settings:/app/settings
     ports:
       - ${PORT}:3000
     env_file:

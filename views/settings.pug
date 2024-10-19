@@ -1,0 +1,22 @@
+extends layout.pug 
+
+
+block content 
+    .container
+        form.card.mb-3.mt-5(action="/settings/cachetime" method="POST") 
+            .card-body
+                label.form-label(for='cachetime') Cache Zeit
+                .input-group.mb-3
+                    input#cachetime.font-monospace.form-control(autocomplete="off" type="number" name="cachetime" value="" + cachetime)
+                    span.input-group-text Minuten
+                input.btn.btn-primary.float-end(value="Speichern" type="submit")
+        form.card.mb-3(action="/settings/prompt" method="POST") 
+            .card-body
+                label.form-label(for='prompt') Prompt
+                textarea#prompt.mb-3.font-monospace.form-control(autocomplete="off" rows='5' name="prompt")= prompt
+                input.btn.btn-primary.float-end(value="Speichern" type="submit")
+        form.card(action="/settings/cities" method="POST") 
+            .card-body
+                label.form-label(for='cities') Städte
+                textarea#cities.mb-3.font-monospace.form-control(autocomplete="off" rows='15' name="cities")= JSON.stringify(cities, null, 4)
+                input.btn.btn-primary.float-end(value="Speichern" type="submit")
