@@ -31,14 +31,14 @@ block content
 
                     .card-body.p-0
                         .row.g-0.h-100
-                            .col.d-flex.align-items-center.justify-content-center.mb-0.h4.p-4.bg-danger.bg-gradient.text-white.text-center=max + " °C"
-                            .col.d-flex.align-items-center.justify-content-center.mb-0.h4.p-4.bg-primary.bg-gradient.text-white.text-center=min + " °C"
-                            .col.d-flex.align-items-center.justify-content-center.mb-0.h4.p-4.bg-secondary-subtle.bg-gradient.text-center=wind + " km/h"
+                            .col.d-flex.align-items-center.justify-content-center.mb-0.h4.p-4.bg-danger.text-white.text-center=max + " °C"
+                            .col.d-flex.align-items-center.justify-content-center.mb-0.h4.p-4.bg-primary.text-white.text-center=min + " °C"
+                            .col.d-flex.align-items-center.justify-content-center.mb-0.h4.p-4.bg-secondary-subtle.text-center=wind + " km/h"
                     .card-footer.d-flex.align-items-center
                         small.fw-light.me-auto Letzte Aktualisierung: 
                             = dateCache.toLocaleString("de-DE")
                         form(action="/refresh/" + currentCity.id + '/' + currentDay method="POST") 
-                            input.btn.btn-sm.btn-outline-secondary(type="submit" value="Refresh")
+                            input.btn.btn-sm.btn-outline-primary(type="submit" value="Refresh")
 
             .col-sm-12.col-md-6
                 .card.h-100
@@ -48,13 +48,13 @@ block content
                     .card-body= generatedText
 
                     form.card-footer(action="/generate/" + currentCity.id + '/' + currentDay, method="post")
-                        input(type="submit" class="btn btn-outline-primary float-end" value="Generiere Text") 
+                        input.btn.btn-sm.btn-outline-primary.float-end(type="submit" value="Generiere Text") 
 
-        .row
+        .row.mt-4
             each hour in grouped
                 .col-xs-6.col-sm-3.col-lg.mb-3
                     .card.h-100
-                        .card-header.text-center= hour.time
+                        .card-header.text-center.no-wrap= hour.time
                         .card-body.text-center.d-flex.flex-column
                             i.h3(class=hour.iconImage)
                             br

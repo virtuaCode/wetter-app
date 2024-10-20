@@ -15,6 +15,7 @@ fetch(url).then(res => {
                 type: 'bar',
                 height: 350
             },
+            colors: ["#000000"],
             plotOptions: {
                 bar: {
                     borderRadius: 4,
@@ -43,7 +44,7 @@ fetch(url).then(res => {
             dataLabels: {
                 enabled: false
             },
-            colors: ["#247BA0", "#FF1654"],
+            colors: ["#2B9EB3", "#f8333c"],
             series: [
 
                 {
@@ -75,17 +76,17 @@ fetch(url).then(res => {
                     },
                     axisBorder: {
                         show: true,
-                        color: "#247BA0"
+                        color: "#2B9EB3"
                     },
                     labels: {
                         style: {
-                            colors: "#247BA0"
+                            colors: "#2B9EB3"
                         }
                     },
                     title: {
                         text: "Regenmenge in mm",
                         style: {
-                            color: "#247BA0"
+                            color: "#2B9EB3"
                         }
                     }
                 },
@@ -96,17 +97,17 @@ fetch(url).then(res => {
                     },
                     axisBorder: {
                         show: true,
-                        color: "#FF1654"
+                        color: "#f8333c"
                     },
                     labels: {
                         style: {
-                            colors: "#FF1654"
+                            colors: "#f8333c"
                         }
                     },
                     title: {
                         text: "Temperatur in °C",
                         style: {
-                            color: "#FF1654"
+                            color: "#f8333c"
                         }
                     },
                     min: date.getMonth() >= 3 && date.getMonth() < 9 ? -10 : -15,

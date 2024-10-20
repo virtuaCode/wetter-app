@@ -10,10 +10,10 @@ block content
                         .card-header.text-center
                             div= day.day
                             div= day.date.toLocaleDateString('de-DE')
-                        .card-body.text-center.pb-0
-                            img.mb-1(src=day.icon)
+                        .card-body.text-center.pb-0.d-flex.flex-column
+                            img.mb-1.align-self-center(src=day.icon)
                             br
-                            .text-center.mb-3.lead= day.alt
+                            .text-center.mb-3.lead.flex-grow-1.d-flex.align-items-center= day.alt
 
-                            .margin-minus.d-flex.align-items-center.justify-content-center.mb-0.h4.p-4.bg-danger.bg-gradient.text-white.text-center= day.max + "C"
-                            .margin-minus.d-flex.align-items-center.justify-content-center.mb-0.h4.p-4.bg-primary.bg-gradient.text-white.text-center.rounded-bottom= day.min + "C"
+                            .margin-minus.d-flex.align-items-center.justify-content-center.mb-0.h4.p-4.bg-danger.text-white.text-center= day.max + "C"
+                            .margin-minus.d-flex.align-items-center.justify-content-center.mb-0.h4.p-4.bg-primary.text-white.text-center.rounded-bottom= day.min + "C"
