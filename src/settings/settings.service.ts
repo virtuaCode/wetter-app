@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import * as fs from "fs"
+import { City } from 'src/dtos/city.dto';
 
 
 @Injectable()
@@ -12,7 +13,11 @@ export class SettingsService {
             this.settings = JSON.parse(fs.readFileSync("settings/settings.default.json", "utf-8"))
         }
     }
-    settings: any
+    settings: {
+        prompt: string;
+        cities: City[];
+        cacheTimeInMinutes: number;
+    }
 
     getCities() {
         return this.settings.cities;

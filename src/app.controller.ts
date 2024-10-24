@@ -46,20 +46,19 @@ export class AppController {
   }
 
   @Post('/settings/prompt')
-  async postSettingsPrompt(@Body() body, @Res() res: Response) {
+  async postSettingsPrompt(@Body() body: {prompt: string }, @Res() res: Response) {
       await this.settingsService.setPrompt(body.prompt?.trim())
       res.redirect("/settings")
   }
 
   @Post('/settings/cachetime')
-  async postSettingsCache(@Body() body, @Res() res: Response) {
+  async postSettingsCache(@Body() body: {cachetime: string}, @Res() res: Response) {
       await this.settingsService.setCacheTime(Number.parseInt(body.cachetime))
       res.redirect("/settings")
   }
 
   @Post('/settings/cities')
-  async postSettingsCities(@Body() body, @Res() res: Response) {
-
+  async postSettingsCities(@Body() body: {cities: string}, @Res() res: Response) {
     try {
       const cities = JSON.parse(body.cities)
 
@@ -83,8 +82,7 @@ export class AppController {
       return;
     }
 
-    const currentDayIndex = this.appService.getDays(new Date().getDay()).findIndex(d => d === day)
-    const currentDay = this.appService.getDays(new Date().getDay())[currentDayIndex]
+    const currentDayIndex = this.appService.getDaysWithOffset(new Date().getDay()).findIndex(d => d === day)
 
     if (currentDayIndex < 0) {
       console.log("Current Day not found")
@@ -96,13 +94,14 @@ export class AppController {
     const date = new Date();
     date.setDate(date.getDate() + currentDayIndex);
 
-    const [weather, dateCache] = await this.appService.getWeather(date, currentCity)
+    const [weather, _] = await this.appService.getWeather(date, currentCity)
     const groups = this.appService.groupWeather(weather, 4).map((e) => {
       return {
         time: e.time,
         temperture: e.temperature + " °C",
         condition: e.icon,
         wind: e.wind + " km/h",
+        wind_direction: e.windCompass
       }
     })
 
@@ -112,7 +111,7 @@ export class AppController {
       weather: groups,
     }
 
-    const response = await this.appService.getGeneratedText(this.settingsService.getPrompt(), date, currentCity, data)
+    await this.appService.getGeneratedText(this.settingsService.getPrompt(), date, currentCity, data)
 
     res.redirect("/weather/" + id + "/" + day)
   }
@@ -130,8 +129,7 @@ export class AppController {
       return;
     }
 
-    const currentDayIndex = this.appService.getDays(new Date().getDay()).findIndex(d => d === day)
-    const currentDay = this.appService.getDays(new Date().getDay())[currentDayIndex]
+    const currentDayIndex = this.appService.getDaysWithOffset(new Date().getDay()).findIndex(d => d === day)
 
     if (currentDayIndex < 0) {
       console.log("Current Day not found")
@@ -159,8 +157,8 @@ export class AppController {
       return res.redirect("/")
     }
 
-    const currentDayIndex = this.appService.getDays(new Date().getDay()).findIndex(d => d === day)
-    const currentDay = this.appService.getDays(new Date().getDay())[currentDayIndex]
+    const currentDayIndex = this.appService.getDaysWithOffset(new Date().getDay()).findIndex(d => d === day)
+    const currentDay = this.appService.getDaysWithOffset(new Date().getDay())[currentDayIndex]
 
     if (currentDayIndex < 0) {
       console.log("Current Day not found")
@@ -184,8 +182,8 @@ export class AppController {
       return res.redirect("/")
     }
 
-    const currentDayIndex = this.appService.getDays(new Date().getDay()).findIndex(d => d === day)
-    const currentDay = this.appService.getDays(new Date().getDay())[currentDayIndex]
+    const currentDayIndex = this.appService.getDaysWithOffset(new Date().getDay()).findIndex(d => d === day)
+    const currentDay = this.appService.getDaysWithOffset(new Date().getDay())[currentDayIndex]
 
     if (currentDayIndex < 0) {
       console.log("Current Day not found")
@@ -196,14 +194,15 @@ export class AppController {
     date.setDate(date.getDate() + currentDayIndex);
     const [weather, dateCache] = await this.appService.getWeather(date, currentCity)
     const grouped = await this.appService.groupWeather(weather, 3)
-    const max = Math.max(...weather.map(e => Math.round(e.temperature)))
-    const min = Math.min(...weather.map(e => Math.round(e.temperature)))
-    const wind = Math.max(...weather.map(e => e.wind_speed))
-    const daysOrdered = this.appService.getDays(new Date().getDay());
+    const max = Math.max(...weather.map(e => Math.round(e.temperature ?? NaN)))
+    const min = Math.min(...weather.map(e => Math.round(e.temperature ?? NaN)))
+    const wind = Math.max(...weather.map(e => e.wind_speed ?? NaN))
+    const windCompass = this.appService.getCompassDirection(this.appService.getCircularMean(weather.map(e => e.wind_direction ?? NaN)))
+    const daysOrdered = this.appService.getDaysWithOffset(new Date().getDay());
     const generatedText = this.appService.getGenerateTextCached(date, currentCity);
     const cities = this.settingsService.getCities();
 
-    const translateDayGerman = (day) => {
+    const translateDayGerman = (day: string) => {
       switch (day.toLowerCase()) {
         case "sunday":
           return "Sonntag";
@@ -236,6 +235,7 @@ export class AppController {
       min,
       max,
       wind,
+      windCompass,
       grouped,
       weather,
       generatedText

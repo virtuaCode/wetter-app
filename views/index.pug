@@ -16,10 +16,10 @@ block content
 
         .row.my-5
             .col
-                ul.nav.nav-tabs
+                ul.nav.nav-tabs.d-flex.justify-content-between
                     each day in days
-                        li.nav-item
-                            a.nav-link(href='/weather/' + currentCity.id + '/' + day, class=(day === currentDay) ? 'active' : '')= translateDayGerman(day)
+                        li.nav-item.flex-fill
+                            a.text-center.nav-link(href='/weather/' + currentCity.id + '/' + day, class=(day === currentDay) ? 'active' : '')= translateDayGerman(day)
 
         .row.mb-3 
             .col-sm-12.col-md-6.mb-3.mb-md-0
@@ -61,7 +61,8 @@ block content
                             h3.mt-2= hour.temperature + " °C"
                             p.mb-0.flex-fill.d-flex.align-items-center.justify-content-center= hour.icon
                         .card-footer 
-                            p.mb-0.text-center= hour.wind + " km/h"
+                            p.mb-0.text-center= hour.wind + " km/h " 
+                                abbr(title="Experimentell")= "(" + hour.windCompass + ")"
 
         hr.my-3
         .row 

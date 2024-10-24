@@ -187,6 +187,11 @@
     --bs-btn-disabled-border-color: var(--bs-black);
 }
 
+.nav-tabs .nav-link {
+    margin-left: -1px;
+    margin-right: -1px;
+}
+
 .no-wrap {
     white-space: nowrap;
     word-wrap: break-word;

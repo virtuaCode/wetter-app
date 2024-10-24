@@ -12,7 +12,10 @@ export class AuthController {
     async signIn(@Body() signInDto: Record<string, any>, @Res() res: Response) {
       const jwt = await this.authService.signIn(signInDto.username, signInDto.password);
 
-      res.cookie("auth-cookie", jwt)
+      var date = new Date();
+      date.setDate(date.getDate() + 30);
+
+      res.cookie("auth-cookie", jwt, {expires: date})
       res.redirect("/")
     }
 

@@ -7,27 +7,37 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 import * as jsdom from "jsdom"
 import { SettingsService } from './settings/settings.service';
+import { ConfigService } from '@nestjs/config';
+import { City } from './dtos/city.dto';
+import { Group } from './dtos/group.dto';
+import { Weather } from './dtos/weather.dto';
 
 @Injectable()
 export class AppService {
   days = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
   daysGerman = ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"]
-
   wetterOberfranken = "https://www.mein-wetter.com/wetter/franken-oberfranken.htm"
-  gemini = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+  baseUrl: string;
+  gemini: GoogleGenerativeAI;
   cache: Map<string, any> = new Map();
   cacheTime: Map<string, any> = new Map();
   geminiCache: Map<string, any> = new Map()
-  base = process.env.WEATHER_BASE_URL;
 
-  constructor(private readonly settingsService: SettingsService) {}
+  constructor(
+    private readonly settingsService: SettingsService,
+    private readonly configService: ConfigService
+  ) {
+    this.gemini = new GoogleGenerativeAI(this.configService.getOrThrow('GEMINI_API_KEY'));
+    this.baseUrl = this.configService.getOrThrow('WEATHER_BASE_URL');
+  }
 
   getIndex() {
     const date = new Date();
     return "/weather/" + this.settingsService.getCities()[0].id + "/" + this.days[date.getDay()]
   }
 
-  clearCacheEntry(date, city) {
+
+  clearCacheEntry(date: Date, city: City) {
     const query = {
       date: this.getGermanyMidnightDate(date).toISOString(),
       lat: city.lat,
@@ -40,7 +50,7 @@ export class AppService {
     this.cleanCache()
   }
 
-  getGenerateTextCached(date: Date, city: any) {
+  getGenerateTextCached(date: Date, city: City) {
     const query = {
       date: this.getGermanyMidnightDate(date).toISOString(),
       id: city.id
@@ -49,11 +59,10 @@ export class AppService {
     const querystring = qs.stringify(query);
 
     return this.geminiCache.get(querystring) || "???"
-
   }
 
   async getGeneratedText(prompt: string, date: Date, city: any, json: any) {
-    const fileManager = new GoogleAIFileManager(process.env.GEMINI_API_KEY);
+    const fileManager = new GoogleAIFileManager(this.configService.getOrThrow('GEMINI_API_KEY'));
 
     await fs.promises.writeFile('weather.json', JSON.stringify(json, null, 4))
 
@@ -90,7 +99,7 @@ export class AppService {
     return result.response.text()
   }
 
-  getGermanyMidnightDate(date) {
+  getGermanyMidnightDate(date: Date) {
     // Create a date in the local time zone
     const date2 = new Date(date.getFullYear(), date.getMonth(), date.getDate());
 
@@ -103,37 +112,46 @@ export class AppService {
     return germanyDate;
   }
 
-  getDays(k) {
+  getDaysWithOffset(k: number) {
 
     const days = [...this.days];
 
     for (let i = 0; i < k; i++) {
-      days.push(days.shift());
+      days.push(days.shift() ?? "");
     }
 
     return days;
   }
 
 
-  addDays(date, days) {
+  addDays(date: Date, days: number) {
     var result = new Date(date);
     result.setDate(result.getDate() + days);
     return result;
   }
 
 
-  async getWeatherForCities(date) {
-    const cities = {}
+  async getWeatherForCities(date: Date) {
+    const cities: {
+      [key: string]: {
+        name: string;
+        min: number;
+        max: number;
+        wind: number;
+        groups: {
 
+        }
+      }
+    } = {}
 
     for (const city of this.settingsService.getCities()) {
       const [weather, dateCache] = await this.getWeather(date, city)
       const groups = this.groupWeather(weather, 4)
       cities[city.id] = {
         name: city.name,
-        min: Math.round(Math.min(...weather.map(e => e.temperature))),
-        max: Math.round(Math.max(...weather.map(e => e.temperature))),
-        wind: Math.round(Math.max(...weather.map(e => e.wind_speed))),
+        min: Math.round(Math.min(...weather.map(e => e.temperature ?? NaN))),
+        max: Math.round(Math.max(...weather.map(e => e.temperature ?? NaN))),
+        wind: Math.round(Math.max(...weather.map(e => e.wind_speed ?? NaN))),
         groups,
       }
     }
@@ -154,39 +172,32 @@ export class AppService {
     }
   }
 
-  async getWeather(date, city): Promise<any> {
-
+  async getWeather(date: Date, city: City): Promise<[Weather[], Date]> {
     const query = {
       date: this.getGermanyMidnightDate(date).toISOString(),
       lat: city.lat,
       lon: city.lon,
     }
-    try {
 
-      this.cleanCache()
+    this.cleanCache()
 
-      const querystring = qs.stringify(query);
-      if (this.cache.has(querystring)) {
-        console.log("Retrieved from cache (" + querystring + ")");
-        return [this.cache.get(querystring), new Date(this.cacheTime.get(querystring))];
-      }
-
-
-      const result = await axios.get(this.base, { params: query });
-      
-      const data = result.data.weather.slice(0,24)
-      
-      this.cache.set(querystring, data)
-      this.cacheTime.set(querystring, new Date().getTime())
-
-      return [data, new Date(this.cacheTime.get(querystring))]
-    } catch (error) {
-      console.error(error.message)
-      return {}
+    const querystring = qs.stringify(query);
+    if (this.cache.has(querystring)) {
+      console.log("Retrieved from cache (" + querystring + ")");
+      return [this.cache.get(querystring), new Date(this.cacheTime.get(querystring))];
     }
+
+
+    const result = await axios.get(this.baseUrl, { params: query });
+    const data = result.data.weather.slice(0, 24)
+
+    this.cache.set(querystring, data)
+    this.cacheTime.set(querystring, new Date().getTime())
+
+    return [data, new Date(this.cacheTime.get(querystring))]
   }
 
-  mostFrequentUsingMap(arr, deleteDry = true) {
+  mostFrequentUsingMap(arr: string[], deleteDry = true) {
     const counts = new Map();
 
     for (let num of arr) {
@@ -196,6 +207,7 @@ export class AppService {
     let mostFrequent;
     let maxCount = 0;
 
+    // Deletes the condition dry when other conditions are present
     if (deleteDry) {
       const dryCount = counts.get("dry") || 0;
 
@@ -216,7 +228,7 @@ export class AppService {
     return mostFrequent;
   }
 
-  groupWeather(weatherDay, hours) {
+  groupWeather(weatherDay: any, hours: number): Group[] {
     const grouped = [];
 
     for (let i = 0; i < Math.round(24 / hours); i++) {
@@ -225,11 +237,14 @@ export class AppService {
       let maxWind = 0;
       let conditions = []
       let icons = []
+      let directions = []
+
 
       for (let k = 0; k < hours; k++) {
         const hour = weatherDay[i * hours + k];
-        conditions.push(hour.condition)
-        icons.push(hour.icon)
+        conditions.push(hour.condition);
+        icons.push(hour.icon);
+        directions.push(hour.wind_direction);
         meanTemperatur += hour.temperature;
         maxWind = hour.wind_speed > maxWind ? hour.wind_speed : maxWind;
       }
@@ -241,25 +256,36 @@ export class AppService {
       grouped.push({
         time: i * hours + " bis " + (i * hours + hours) + " Uhr",
         temperature: meanTemperatur,
-        condition: this.weatherInGerman(condition),
-        icon: this.translateWeatherToGerman(icon),
-        iconImage: this.translateWeatherToIcon(icon),
+        condition: this.weatherInGerman(condition ?? ""),
+        icon: this.translateWeatherToGerman(icon ?? ""),
+        iconImage: this.translateWeatherToIcon(icon ?? ""),
         wind: Math.round(maxWind),
+        windCompass: this.getCompassDirection(this.getCircularMean(directions))
       })
 
-    }
 
+    }
 
     return grouped
   }
 
-  getWeatherStats(weather: any) {
-    const group = arr => arr.reduce((a, v) => {
-      a[v] = (a[v] ?? 0) + 1;
-      return a;
-    }, {});
+  getCompassDirection(angle: number) {
+    const val = Math.floor((angle / 45) + 0.5);
+    const arr = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+    return arr[(val % 8)]
+  }
 
-    const grouped = group(weather.map(e => this.translateWeatherToGerman(e.icon)));
+  getWeatherStats(weather: Weather[]) {
+
+    // Counts each value in a string array
+    function group(arr: string[]) {
+      return arr.reduce((a: { [key: string]: number }, v: string) => {
+        a[v] = (a[v] ?? 0) + 1;
+        return a;
+      }, {})
+    }
+
+    const grouped = group(weather.map(e => this.translateWeatherToGerman(e.icon ?? "")));
 
     const response = {
       icons: {
@@ -280,26 +306,31 @@ export class AppService {
 
   async getWeatherOberfranken() {
     const url = this.wetterOberfranken;
-
     const result = await axios.get(url);
-
     const dom = new jsdom.JSDOM(result.data)
-
-    const days = dom.window.document.querySelectorAll("#blockfooter .seven-day-fc2")
-
+    const days = dom.window.document.querySelectorAll("#blockfooter .seven-day-fc2");
     const dayElements = [...Array.from(days.values())];
-
     const data = dayElements.map(e => {
-      const [YYYY, MM, DD] = e.querySelector("time").getAttribute("datetime").split('-')
+      const time = e.querySelector("time")
+
+      if (time === null)
+        throw new Error("time element not found");
+
+      const datetime = time.getAttribute("datetime");
+
+      if (datetime === null)
+        throw new Error("datetime attribute not found")
+
+      const [YYYY, MM, DD] = datetime.split('-');
       const date = new Date(+YYYY, +MM - 1, +DD);
 
       return {
         day: this.daysGerman[date.getDay()],
         date: date,
-        icon: "https://www.mein-wetter.com" + e.querySelector("img").src,
-        alt: e.querySelector("img").alt,
-        min: e.querySelector(".temp-low2").textContent,
-        max: e.querySelector(".temp-high2").textContent,
+        icon: "https://www.mein-wetter.com" + e.querySelector("img")?.src,
+        alt: e.querySelector("img")?.alt,
+        min: e.querySelector(".temp-low2")?.textContent,
+        max: e.querySelector(".temp-high2")?.textContent,
       }
     })
 
@@ -307,8 +338,34 @@ export class AppService {
 
   }
 
+  toDegrees(angle: number) {
+    return angle * (180 / Math.PI);
+  }
 
-  translateWeatherToGerman(condition) {
+  toRadians(angle: number) {
+    return angle * (Math.PI / 180);
+  }
+
+  getCircularMean(values: number[]) {
+    const radians = values.map(this.toRadians)
+
+    const sin_sum = radians.map(e => Math.sin(e)).reduce((a, b) => a + b)
+    const cos_sum = radians.map(e => Math.cos(e)).reduce((a, b) => a + b)
+    const mean_rad = Math.atan2(sin_sum, cos_sum)
+
+    const div = this.toDegrees(mean_rad)
+
+    // Remainder function
+    function rem(a: number, b: number) {
+      b = Math.abs(b);  // Ensure divisor is positive
+      const remainder = a % b;
+      return remainder >= 0 ? remainder : remainder + b;
+    }
+
+    return rem(div, 360)
+  }
+
+  translateWeatherToGerman(condition: string) {
     switch (condition) {
       case "clear-day":
         return "Klarer Tag";
@@ -339,7 +396,7 @@ export class AppService {
     }
   }
 
-  translateWeatherToIcon(condition) {
+  translateWeatherToIcon(condition: string) {
     switch (condition) {
       case "clear-day":
         return "qi-100";
@@ -370,7 +427,7 @@ export class AppService {
     }
 
   }
-  weatherInGerman(condition) {
+  weatherInGerman(condition: string) {
     switch (condition.toLowerCase()) {
       case "dry":
         return "Trocken";
@@ -389,11 +446,5 @@ export class AppService {
       default:
         return "Unbekannte Wetterbedingung";
     }
-
-
   }
-
-
-
-
 }
